@@ -1,0 +1,16 @@
+# =====================================================================
+# DESAFIO BLUE TEAM - REGRAS DO SURICATA IDS/IPS
+# Dica: No cabeçalho Modbus TCP, o 8º byte do payload (offset 7)
+# define o Function Code (FC):
+#   - FC 05 (|05|) = Write Single Coil (Desliga 1 disjuntor por vez)
+#   - FC 15 (|0f|) = Write Multiple Coils (Desliga vários de uma vez!)
+# =====================================================================
+
+# REGRA 1: Detecta o ataque básico (Function Code 05 = 0x05)
+# MISSÃO 1: Troque 'alert' por 'drop' abaixo para bloquear o ataque!
+alert tcp 172.28.0.99 any -> 172.28.0.10 502 (msg:"[ALERTA ICS] Comando Modbus Write Single Coil (FC 05) Detectado!"; flow:to_server,established; content:"|05|"; offset:7; depth:1; sid:2015001; rev:1;)
+
+# MISSÃO 2: O Red Team descobriu que pode usar o Function Code 15 (0x0F em hexadecimal)
+# para desligar todos os disjuntores de uma vez e passar batido pela Regra 1!
+# Descomente e complete a regra abaixo para bloquear (drop) o Function Code 15 (|0f|):
+# drop tcp 172.28.0.99 any -> 172.28.0.10 502 (msg:"[IPS BLOCK] Tentativa de Evasao com Write Multiple Coils (FC 15)!"; flow:to_server,established; content:"|0f|"; offset:7; depth:1; sid:2015002; rev:1;)

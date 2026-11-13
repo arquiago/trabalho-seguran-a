@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Subestação: Roda o PLC Modbus (porta 502) + Painel Web HMI (porta 8080)
+  subestacao_kiev:
+    build: ./plc_hmi
+    container_name: subestacao_kiev
+    ports:
+      - "8080:8080" # Painel visual acessível no navegador do host
+      - "502:502"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./ids_defense/firewall_ot.sh:/app/firewall_ot.sh
+    networks:
+      rede_ot:
+        ipv4_address: 172.28.0.10
+
+  # Suricata rodando em modo IPS (Inline via NFQUEUE) junto à placa de rede da subestação
+  suricata_ips:
+    image: jasonish/suricata:latest
+    container_name: suricata_ips
+    network_mode: "service:subestacao_kiev"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_NICE
+    volumes:
+      - ./ids_defense/local.rules:/var/lib/suricata/rules/local.rules
+      - ./logs:/var/log/suricata
+    # -q 0 faz o Suricata ler a fila 0 do iptables (permite usar 'drop' além de 'alert')
+    command: -q 0 -S /var/lib/suricata/rules/local.rules -k none -v
+    depends_on:
+      - subestacao_kiev
+
+  # Máquina do Atacante (Sandworm)
+  atacante_sandworm:
+    build: ./red_team
+    container_name: atacante_sandworm
+    volumes:
+      - ./red_team:/app
+    networks:
+      rede_ot:
+        ipv4_address: 172.28.0.99
+
+networks:
+  rede_ot:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
